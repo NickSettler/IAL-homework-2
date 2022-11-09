@@ -218,57 +218,33 @@ void bst_delete(bst_node_t **tree, char key) {
  * vlastných pomocných funkcií.
  */
 void bst_dispose(bst_node_t **tree) {
-    bst_node_t *current = *tree;
-    bst_node_t *parent = NULL;
+    if (*tree == NULL) return;
 
-    while (current != NULL) {
-        if (current->left == NULL && current->right == NULL) {
-            if (parent == NULL) {
-                *tree = NULL;
-            } else {
-                if (parent->left == current) {
-                    parent->left = NULL;
-                } else {
-                    parent->right = NULL;
-                }
-            }
+    while (*tree != NULL) {
+        bst_node_t *current = *tree;
+        bst_node_t *parent = NULL;
 
-            free(current);
-            current = parent;
-        } else if (current->left == NULL) {
-            if (parent == NULL) {
-                *tree = current->right;
-            } else {
-                if (parent->left == current) {
-                    parent->left = current->right;
-                } else {
-                    parent->right = current->right;
-                }
-            }
-
-            free(current);
-            current = parent;
-        } else if (current->right == NULL) {
-            if (parent == NULL) {
-                *tree = current->left;
-            } else {
-                if (parent->left == current) {
-                    parent->left = current->left;
-                } else {
-                    parent->right = current->left;
-                }
-            }
-
-            free(current);
-            current = parent;
-        } else {
-            bst_replace_by_rightmost(current, &current->left);
-        }
-
-        if (current != NULL) {
+        while (current->left != NULL || current->right != NULL) {
             parent = current;
-            current = current->right;
+
+            if (current->left != NULL) {
+                current = current->left;
+            } else {
+                current = current->right;
+            }
         }
+
+        if (parent == NULL) {
+            *tree = NULL;
+        } else {
+            if (parent->left == current) {
+                parent->left = NULL;
+            } else {
+                parent->right = NULL;
+            }
+        }
+
+        free(current);
     }
 }
 
@@ -367,6 +343,12 @@ void bst_inorder(bst_node_t *tree) {
 void bst_leftmost_postorder(bst_node_t *tree, stack_bst_t *to_visit,
                             stack_bool_t *first_visit) {
     bst_node_t *current = tree;
+
+    while (current != NULL) {
+        stack_bst_push(to_visit, current);
+        stack_bool_push(first_visit, true);
+        current = current->left;
+    }
 }
 
 /*
