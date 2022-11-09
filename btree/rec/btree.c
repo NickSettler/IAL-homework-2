@@ -37,16 +37,17 @@ void bst_init(bst_node_t **tree) {
 bool bst_search(bst_node_t *tree, char key, int *value) {
     if (tree == NULL) return false;
 
-    if (tree->key == key) {
+    if (tree->key != key) {
+        if (tree->key > key)
+            return bst_search(tree->left, key, value);
+        else
+            return bst_search(tree->right, key, value);
+    } else if (tree->key == key) {
         *value = tree->value;
         return true;
     }
 
-    if (tree->key > key) {
-        return bst_search(tree->left, key, value);
-    } else {
-        return bst_search(tree->right, key, value);
-    }
+    return false;
 }
 
 /*
@@ -99,6 +100,7 @@ void bst_replace_by_rightmost(bst_node_t *target, bst_node_t **tree) {
     if ((*tree)->right == NULL) {
         target->key = (*tree)->key;
         target->value = (*tree)->value;
+
         bst_node_t *tmp = *tree;
         *tree = (*tree)->left;
         free(tmp);
@@ -121,36 +123,27 @@ void bst_replace_by_rightmost(bst_node_t *target, bst_node_t **tree) {
  * použitia vlastných pomocných funkcií.
  */
 void bst_delete(bst_node_t **tree, char key) {
-    int v;
-    if(!bst_search(*tree, key, &v)) return;
+    int result;
+    bool exists = bst_search(*tree, key, &result);
 
-    if ((*tree)->key == key) {
-        if ((*tree)->left == NULL && (*tree)->right == NULL) {
+    if (!exists) return;
+
+    if ((*tree)->key != key) {
+        bst_delete((*tree)->key > key ? &(*tree)->left : &(*tree)->right, key);
+    } else {
+        bool has_left_child = (*tree)->left != NULL;
+        bool has_right_child = (*tree)->right != NULL;
+        bool has_only_one_child = has_left_child ^ has_right_child;
+
+        if (has_only_one_child) {
+            bst_node_t *tmp = *tree;
+            *tree = has_left_child ? (*tree)->left : (*tree)->right;
+            free(tmp);
+        } else if (has_left_child && has_right_child) {
+            bst_replace_by_rightmost(*tree, &(*tree)->left);
+        } else {
             free(*tree);
             *tree = NULL;
-            return;
-        }
-
-        if ((*tree)->left == NULL) {
-            bst_node_t *tmp = *tree;
-            *tree = (*tree)->right;
-            free(tmp);
-            return;
-        }
-
-        if ((*tree)->right == NULL) {
-            bst_node_t *tmp = *tree;
-            *tree = (*tree)->left;
-            free(tmp);
-            return;
-        }
-
-        bst_replace_by_rightmost(*tree, &(*tree)->left);
-    } else {
-        if ((*tree)->key > key) {
-            bst_delete(&(*tree)->left, key);
-        } else {
-            bst_delete(&(*tree)->right, key);
         }
     }
 }
